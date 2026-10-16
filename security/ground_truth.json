@@ -1,0 +1,110 @@
+[
+  {
+    "id": "VULN-001",
+    "status": "introduced",
+    "category": "sql-injection",
+    "cwe": "CWE-89",
+    "file": "app/routes/products.py",
+    "affected_function": "search_products",
+    "line": 36,
+    "endpoint": "GET /products/search",
+    "dependency": null,
+    "expected_scanners": ["CodeQL (py/sql-injection)", "Semgrep (ruleset-dependent)"],
+    "scanner_coverage_verified": false,
+    "description": "User-controlled query parameter `q` reaches an SQL statement built by string concatenation/formatting.",
+    "expected_remediation": "Use parameterized SQL queries with bound parameters; escape LIKE wildcards.",
+    "advisory_id": null,
+    "fixed_version": null,
+    "regression_tests": [
+      "tests/test_security.py::test_search_treats_sql_syntax_as_literal_text",
+      "tests/test_security.py::test_search_with_quote_does_not_error_or_leak_sql",
+      "tests/test_security.py::test_search_cannot_read_users_table"
+    ]
+  },
+  {
+    "id": "VULN-002",
+    "status": "introduced",
+    "category": "command-injection",
+    "cwe": "CWE-78",
+    "file": "app/routes/utilities.py",
+    "affected_function": "ping_host",
+    "line": 74,
+    "endpoint": "GET /diagnostics/ping",
+    "dependency": null,
+    "expected_scanners": ["CodeQL (py/command-line-injection)", "Semgrep (ruleset-dependent)"],
+    "scanner_coverage_verified": false,
+    "description": "User-controlled `host` parameter is passed to an operating-system command through a shell.",
+    "expected_remediation": "Validate the host against a strict hostname/IP pattern and invoke the command with an argument list and no shell.",
+    "advisory_id": null,
+    "fixed_version": null,
+    "regression_tests": [
+      "tests/test_security.py::test_ping_rejects_shell_metacharacters",
+      "tests/test_security.py::test_ping_rejects_option_injection"
+    ]
+  },
+  {
+    "id": "VULN-003",
+    "status": "introduced",
+    "category": "ssrf",
+    "cwe": "CWE-918",
+    "file": "app/routes/utilities.py",
+    "affected_function": "fetch_url",
+    "line": 52,
+    "endpoint": "POST /fetch-url",
+    "dependency": null,
+    "expected_scanners": ["CodeQL (py/full-ssrf)", "Semgrep (ruleset-dependent)"],
+    "scanner_coverage_verified": false,
+    "description": "The server fetches a user-supplied URL without restricting scheme, host, port or redirects.",
+    "expected_remediation": "Allow only http/https to an explicit host allowlist, reject credentials in URLs, and do not follow redirects.",
+    "advisory_id": null,
+    "fixed_version": null,
+    "regression_tests": [
+      "tests/test_security.py::test_fetch_url_blocks_loopback_service",
+      "tests/test_security.py::test_fetch_url_blocks_hosts_not_on_allowlist",
+      "tests/test_security.py::test_fetch_url_blocks_file_scheme",
+      "tests/test_security.py::test_fetch_url_does_not_follow_redirect_to_internal"
+    ]
+  },
+  {
+    "id": "VULN-004",
+    "status": "introduced",
+    "category": "hardcoded-secret",
+    "cwe": "CWE-798",
+    "file": "app/config.py",
+    "affected_function": "get_settings",
+    "line": 23,
+    "endpoint": null,
+    "dependency": null,
+    "expected_scanners": ["Gitleaks (generic-api-key, entropy-dependent)", "Trivy secret scanning (rule-dependent)", "CodeQL (py/hardcoded-credentials, query-suite-dependent)"],
+    "scanner_coverage_verified": false,
+    "description": "A fictional API key value is stored directly in application source.",
+    "expected_remediation": "Load the value from an environment variable or secret manager; remove the literal from source and git history.",
+    "advisory_id": null,
+    "fixed_version": null,
+    "regression_tests": [
+      "tests/test_security.py::test_no_hardcoded_secrets_in_application_source",
+      "tests/test_security.py::test_demo_api_key_is_read_from_environment"
+    ]
+  },
+  {
+    "id": "VULN-005",
+    "status": "introduced",
+    "category": "vulnerable-dependency",
+    "cwe": "CWE-1395",
+    "file": "requirements.txt",
+    "affected_function": null,
+    "line": 17,
+    "endpoint": null,
+    "dependency": {"package": "idna", "vulnerable_version": "3.6", "affected_range": "<3.15"},
+    "expected_scanners": ["Trivy (vuln)", "OSV.dev / pip-audit"],
+    "scanner_coverage_verified": true,
+    "description": "A pinned dependency version with published advisories (CVE-2024-3651, CVE-2026-45409).",
+    "expected_remediation": "Upgrade the package to the advisory's fixed version (3.15 or later) and re-run the tests.",
+    "advisory_id": "GHSA-jjg7-2v4v-x38h, GHSA-65pc-fj4g-8rjx",
+    "fixed_version": "3.15",
+    "regression_tests": [
+      "tests/test_security.py::test_all_requirements_are_pinned",
+      "tests/test_security.py::test_requirements_have_no_known_vulnerabilities"
+    ]
+  }
+]
